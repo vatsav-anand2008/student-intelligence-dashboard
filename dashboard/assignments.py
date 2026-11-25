@@ -30,7 +30,6 @@ def show_assignments():
     st.subheader("Add an Assignment")
 
     with st.form("assignment_form"):
-
         selected_course = st.selectbox(
             "Course",
             options=list(course_options.keys())
@@ -81,7 +80,6 @@ def show_assignments():
         return
 
     for assignment in assignments:
-
         with st.expander(
             f"{assignment['name']} - {assignment['course_code']}"
         ):
@@ -109,7 +107,6 @@ def show_assignments():
 
             #Edit Assignment
             with st.form(f"edit_{assignment['id']}"):
-
                 current_course = next(
                     course_name
                     for course_name, course_id in course_options.items()

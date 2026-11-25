@@ -45,16 +45,12 @@ def edit_assignment(
 ):
     if not name or not name.strip():
         raise ValueError("Assignment name cannot be empty.")
-
     if course_id is None:
         raise ValueError("Please select a course.")
-
     if due_date is None:
         raise ValueError("Please select a due date.")
-
     if estimated_hours < 0:
         raise ValueError("Estimated hours cannot be negative.")
-
     if importance not in (0, 1):
         raise ValueError("Invalid importance value.")
 
