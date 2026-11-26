@@ -1,5 +1,6 @@
 import streamlit as st
 from dashboard.assignments import show_assignments
+from dashboard.courses import show_courses
 
 st.set_page_config(
     page_title="Purdue Student Dashboard",
@@ -12,7 +13,7 @@ st.sidebar.title("Navigation")
 
 page = st.sidebar.radio(
     "Go to:",
-    ["Home", "Assignments"]
+    ["Home", "Courses", "Assignments"]
 )
 
 # Home page
@@ -24,6 +25,10 @@ if page == "Home":
     st.subheader("Upcoming Assignments")
 
     st.info("No assignments added yet.")
+
+#Course page
+elif page == "Courses":
+    show_courses()
 
 # Assignment page
 elif page == "Assignments":

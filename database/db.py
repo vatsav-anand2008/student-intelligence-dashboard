@@ -43,6 +43,7 @@ def initialize_database():
 
 def add_course(course_name, course_code):
     conn = get_connection()
+
     with conn:
         conn.execute("""
             INSERT INTO courses (name, code)
@@ -52,9 +53,33 @@ def add_course(course_name, course_code):
 
 def get_courses():
     conn = get_connection()
+    
     with conn:
         cursor = conn.execute("SELECT * FROM courses")
         return cursor.fetchall()
+    conn.close()
+
+def update_course(course_id, course_name, course_code):
+    conn = get_connection()
+
+    with conn:
+        conn.execute("""
+            UPDATE courses
+            SET name = ?, code = ?
+            WHERE id = ?
+        """, (course_name, course_code, course_id))
+
+    conn.close()
+
+def delete_course(course_id):
+    conn = get_connection()
+
+    with conn:
+        conn.execute("""
+            DELETE FROM courses
+            WHERE id = ?
+        """, (course_id,))
+
     conn.close()
 
 def add_assignment(course_id, name, due_date, estimated_hours, importance):
@@ -111,14 +136,7 @@ def delete_assignment(assignment_id):
 
     conn.close()
 
-def update_assignment(
-    assignment_id,
-    course_id,
-    name,
-    due_date,
-    estimated_hours,
-    importance
-):
+def update_assignment(assignment_id, course_id, name, due_date, estimated_hours, importance):
     conn = get_connection()
 
     with conn:

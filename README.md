@@ -16,7 +16,7 @@ high level. If you have a diagram, embed it here:
 ## Tech Stack
 
 - **Language:** Python
-- **Libraries:** pandas, Plotly, datetime
+- **Libraries:** pandas, Plotly, datetime, streamlit
 - **External tools:** SQLite database
 
 ## Setup
