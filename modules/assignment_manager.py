@@ -35,14 +35,7 @@ def retrieve_assignments():
 def remove_assignment(assignment_id):
     delete_assignment(assignment_id)
 
-def edit_assignment(
-    assignment_id,
-    course_id,
-    name,
-    due_date,
-    estimated_hours,
-    importance
-):
+def edit_assignment(assignment_id, course_id, name, due_date, estimated_hours, importance):
     if not name or not name.strip():
         raise ValueError("Assignment name cannot be empty.")
     if course_id is None:
