@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
+import altair as alt
 from database.db import get_assignments
 from modules.priority_engine import classify_assignment
 from modules.workload import calculate_weekly_workload
@@ -130,18 +131,18 @@ def show_home():
 
     workload = calculate_weekly_workload(assignments)
 
-    # Convert the workload dictionary into a DataFrame
+    # Create readable weekday labels in chronological order
+    day_labels = [
+        day.strftime("%a %b %d")
+        for day in workload.keys()
+    ]
+
     workload_df = pd.DataFrame({
-        "Day": [
-            day.strftime("%a, %b %d")
-            for day in workload.keys()
-        ],
+        "Day": day_labels,
         "Planned Hours": list(workload.values())
     })
 
-    workload_df = workload_df.set_index("Day")
-
-    # Display total weekly hours
+    # Calculate total hours
     total_hours = sum(workload.values())
 
     st.metric(
@@ -149,21 +150,38 @@ def show_home():
         f"{total_hours:.1f} hours"
     )
 
-    # Display bar chart
-    st.bar_chart(
-        workload_df,
-        y="Planned Hours",
-        x_label="Day",
-        y_label="Estimated Hours"
+    # Create chart with an explicitly ordered categorical axis
+    chart = alt.Chart(workload_df).mark_bar().encode(
+        x=alt.X(
+            "Day:N",
+            sort=day_labels,
+            axis=alt.Axis(
+                title="Day",
+                labelAngle=0
+            )
+        ),
+        y=alt.Y(
+            "Planned Hours:Q",
+            title="Estimated Hours",
+            scale=alt.Scale(domainMin=0)
+        ),
+        tooltip=[
+            alt.Tooltip("Day:N"),
+            alt.Tooltip("Planned Hours:Q", format=".2f")
+        ]
+    ).properties(
+        height=350
+    )
+
+    st.altair_chart(
+        chart,
+        use_container_width=True
     )
 
     st.caption(
-        "Hours are estimates distributed evenly across each "
-        "assignment's planned date range. Completed assignments "
-        "and assignments without planned dates are excluded."
+        "Estimated hours are distributed evenly across each "
+        "assignment's planned date range."
     )
-
-
 
 def display_quadrant(assignments):
 
