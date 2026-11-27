@@ -1,7 +1,5 @@
-
 import streamlit as st
 from datetime import date
-
 from database.db import get_courses
 from modules.assignment_manager import (
     create_assignment,
@@ -26,7 +24,7 @@ def show_assignments():
         for course in courses
     }
 
-    #Add Assignment
+    # Add Assignment
     st.subheader("Add an Assignment")
 
     with st.form("assignment_form"):
@@ -37,7 +35,10 @@ def show_assignments():
 
         assignment_name = st.text_input("Assignment Name")
 
-        due_date = st.date_input("Due Date")
+        due_date = st.date_input(
+            "Due Date",
+            value=date.today()
+        )
 
         estimated_hours = st.number_input(
             "Estimated Completion Hours",
@@ -50,6 +51,16 @@ def show_assignments():
             ["Important", "Not Important"]
         )
 
+        planned_start_date = st.date_input(
+            "Planned Start Date",
+            value=date.today()
+        )
+
+        target_completion_date = st.date_input(
+            "Target Completion Date",
+            value=due_date
+        )
+
         submitted = st.form_submit_button("Add Assignment")
 
         if submitted:
@@ -59,7 +70,9 @@ def show_assignments():
                     assignment_name,
                     due_date,
                     estimated_hours,
-                    1 if importance == "Important" else 0
+                    1 if importance == "Important" else 0,
+                    planned_start_date,
+                    target_completion_date
                 )
 
                 st.success("Assignment added successfully!")
@@ -70,7 +83,7 @@ def show_assignments():
 
     st.divider()
 
-    #Display Assignments
+    # Display Assignments
     st.subheader("Your Assignments")
 
     assignments = retrieve_assignments()
@@ -85,13 +98,23 @@ def show_assignments():
         ):
             st.write(f"**Course:** {assignment['course_name']}")
             st.write(f"**Due Date:** {assignment['due_date']}")
-            st.write(f"**Estimated Hours:** {assignment['estimated_hours']}")
+            st.write(
+                f"**Planned Start:** "
+                f"{assignment['planned_start_date'] or 'Not specified'}"
+            )
+            st.write(
+                f"**Target Completion:** "
+                f"{assignment['target_completion_date'] or 'Not specified'}"
+            )
+            st.write(
+                f"**Estimated Hours:** {assignment['estimated_hours']}"
+            )
             st.write(
                 f"**Importance:** "
                 f"{'Important' if assignment['importance'] else 'Not Important'}"
             )
 
-            #Completion Checkbox
+            # Completion Checkbox
             completed = st.checkbox(
                 "Completed",
                 value=bool(assignment["completed"]),
@@ -104,9 +127,9 @@ def show_assignments():
 
             st.divider()
 
-
-            #Edit Assignment
+            # Edit Assignment
             with st.form(f"edit_{assignment['id']}"):
+
                 current_course = next(
                     course_name
                     for course_name, course_id in course_options.items()
@@ -142,6 +165,26 @@ def show_assignments():
                     index=0 if assignment["importance"] == 1 else 1
                 )
 
+                edited_start_date = st.date_input(
+                    "Planned Start Date",
+                    value=(
+                        date.fromisoformat(assignment["planned_start_date"])
+                        if assignment["planned_start_date"]
+                        else date.today()
+                    ),
+                    key=f"start_date_{assignment['id']}"
+                )
+
+                edited_target_date = st.date_input(
+                    "Target Completion Date",
+                    value=(
+                        date.fromisoformat(assignment["target_completion_date"])
+                        if assignment["target_completion_date"]
+                        else date.fromisoformat(assignment["due_date"])
+                    ),
+                    key=f"target_date_{assignment['id']}"
+                )
+
                 save_changes = st.form_submit_button("Save Changes")
 
                 if save_changes:
@@ -152,7 +195,9 @@ def show_assignments():
                             edited_name,
                             edited_date,
                             edited_hours,
-                            1 if edited_importance == "Important" else 0
+                            1 if edited_importance == "Important" else 0,
+                            edited_start_date,
+                            edited_target_date
                         )
 
                         st.success("Assignment updated!")
@@ -161,8 +206,7 @@ def show_assignments():
                     except ValueError as error:
                         st.error(str(error))
 
-
-            #Delete Assignment
+            # Delete Assignment
             if st.button(
                 "Delete Assignment",
                 key=f"delete_{assignment['id']}"

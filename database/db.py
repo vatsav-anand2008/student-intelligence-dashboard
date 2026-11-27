@@ -31,6 +31,8 @@ def initialize_database():
                 due_date TEXT NOT NULL,
                 estimated_hours REAL,
                 importance INTEGER NOT NULL CHECK (importance IN (0, 1)),
+                planned_start_date TEXT,
+                target_completion_date TEXT,
                 completed INTEGER NOT NULL DEFAULT 0,
 
                 FOREIGN KEY (course_id)
@@ -38,6 +40,30 @@ def initialize_database():
                     ON DELETE CASCADE
             )
         """)
+
+    conn.close()
+
+def migrate_database():
+    conn = get_connection()
+
+    # Get the existing columns in the assignments table
+    columns = [
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(assignments)").fetchall()
+    ]
+
+    with conn:
+        if "planned_start_date" not in columns:
+            conn.execute("""
+                ALTER TABLE assignments
+                ADD COLUMN planned_start_date TEXT
+            """)
+
+        if "target_completion_date" not in columns:
+            conn.execute("""
+                ALTER TABLE assignments
+                ADD COLUMN target_completion_date TEXT
+            """)
 
     conn.close()
 
@@ -56,8 +82,9 @@ def get_courses():
     
     with conn:
         cursor = conn.execute("SELECT * FROM courses")
-        return cursor.fetchall()
+        courses = cursor.fetchall()
     conn.close()
+    return courses
 
 def update_course(course_id, course_name, course_code):
     conn = get_connection()
@@ -82,7 +109,7 @@ def delete_course(course_id):
 
     conn.close()
 
-def add_assignment(course_id, name, due_date, estimated_hours, importance):
+def add_assignment(course_id, name, due_date, estimated_hours, importance, planned_start_date, target_completion_date):
     conn = get_connection()
 
     with conn:
@@ -92,10 +119,20 @@ def add_assignment(course_id, name, due_date, estimated_hours, importance):
                 name,
                 due_date,
                 estimated_hours,
-                importance
+                importance,
+                planned_start_date,
+                target_completion_date
             )
-            VALUES (?, ?, ?, ?, ?)
-        """, (course_id, name, due_date, estimated_hours, importance))
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            course_id,
+            name,
+            due_date,
+            estimated_hours,
+            importance,
+            planned_start_date,
+            target_completion_date
+        ))
 
     conn.close()
     
@@ -111,6 +148,8 @@ def get_assignments():
                 assignments.due_date,
                 assignments.estimated_hours,
                 assignments.importance,
+                assignments.planned_start_date,
+                assignments.target_completion_date,
                 assignments.completed,
                 courses.name AS course_name,
                 courses.code AS course_code
@@ -136,18 +175,19 @@ def delete_assignment(assignment_id):
 
     conn.close()
 
-def update_assignment(assignment_id, course_id, name, due_date, estimated_hours, importance):
+def update_assignment(assignment_id, course_id, name, due_date, estimated_hours, importance, planned_start_date, target_completion_date):
     conn = get_connection()
 
     with conn:
         conn.execute("""
             UPDATE assignments
-            SET
-                course_id = ?,
+            SET course_id = ?,
                 name = ?,
                 due_date = ?,
                 estimated_hours = ?,
-                importance = ?
+                importance = ?,
+                planned_start_date = ?,
+                target_completion_date = ?
             WHERE id = ?
         """, (
             course_id,
@@ -155,6 +195,8 @@ def update_assignment(assignment_id, course_id, name, due_date, estimated_hours,
             due_date,
             estimated_hours,
             importance,
+            planned_start_date,
+            target_completion_date,
             assignment_id
         ))
 
