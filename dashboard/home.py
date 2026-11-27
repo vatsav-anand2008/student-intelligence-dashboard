@@ -1,8 +1,10 @@
 
 import streamlit as st
+import pandas as pd
 from datetime import date
 from database.db import get_assignments
 from modules.priority_engine import classify_assignment
+from modules.workload import calculate_weekly_workload
 
 
 def show_home():
@@ -48,6 +50,29 @@ def show_home():
     st.caption(f"Estimated remaining workload: {total_hours:.1f} hours")
 
     st.divider()
+
+    # Upcoming deadlines
+    st.subheader("Upcoming Deadlines")
+    
+    upcoming = sorted(
+        active_assignments,
+        key=lambda assignment: assignment["due_date"]
+    )
+    
+    upcoming = [
+        assignment for assignment in upcoming
+        if date.fromisoformat(assignment["due_date"]) >= today
+    ]
+    
+    if not upcoming:
+        st.success("No upcoming deadlines!")
+    else:
+        for assignment in upcoming[:5]:
+            st.write(
+                f"**{assignment['name']}** "
+                f"({assignment['course_code']})"
+            )
+            st.caption(f"Due: {assignment['due_date']}")
 
     # Classify assignments into Eisenhower quadrants
     quadrants = {
@@ -99,29 +124,45 @@ def show_home():
         display_quadrant(quadrants["Optional"])
 
     st.divider()
+    
+    # Weekly Workload
+    st.subheader("Weekly Workload")
 
-    # Upcoming deadlines
-    st.subheader("Upcoming Deadlines")
+    workload = calculate_weekly_workload(assignments)
 
-    upcoming = sorted(
-        active_assignments,
-        key=lambda assignment: assignment["due_date"]
+    # Convert the workload dictionary into a DataFrame
+    workload_df = pd.DataFrame({
+        "Day": [
+            day.strftime("%a, %b %d")
+            for day in workload.keys()
+        ],
+        "Planned Hours": list(workload.values())
+    })
+
+    workload_df = workload_df.set_index("Day")
+
+    # Display total weekly hours
+    total_hours = sum(workload.values())
+
+    st.metric(
+        "Total Planned Hours This Week",
+        f"{total_hours:.1f} hours"
     )
 
-    upcoming = [
-        assignment for assignment in upcoming
-        if date.fromisoformat(assignment["due_date"]) >= today
-    ]
+    # Display bar chart
+    st.bar_chart(
+        workload_df,
+        y="Planned Hours",
+        x_label="Day",
+        y_label="Estimated Hours"
+    )
 
-    if not upcoming:
-        st.success("No upcoming deadlines!")
-    else:
-        for assignment in upcoming[:5]:
-            st.write(
-                f"**{assignment['name']}** "
-                f"({assignment['course_code']})"
-            )
-            st.caption(f"Due: {assignment['due_date']}")
+    st.caption(
+        "Hours are estimates distributed evenly across each "
+        "assignment's planned date range. Completed assignments "
+        "and assignments without planned dates are excluded."
+    )
+
 
 
 def display_quadrant(assignments):
